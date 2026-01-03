@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    // ...existing code...
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "baseUrl": "./src",
+    "moduleResolution": "node",
+    "paths": {
+      "@/*": ["*"]
+    }
+  }
+}

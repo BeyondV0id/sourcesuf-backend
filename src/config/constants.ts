@@ -1,0 +1,3 @@
+export const DEFAULT_PAGE_LIMIT = 20;
+export const TRENDING_JOB_INTERVAL_MINUTES = 30;
+export const MIN_STARS_FOR_TRENDING = 100;
