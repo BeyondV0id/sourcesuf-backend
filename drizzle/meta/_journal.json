@@ -15,6 +15,13 @@
       "when": 1767017021372,
       "tag": "0001_clean_excalibur",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1767510781639,
+      "tag": "0002_complete_toad_men",
+      "breakpoints": true
     }
   ]
 }
