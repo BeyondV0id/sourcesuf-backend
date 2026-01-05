@@ -18,6 +18,7 @@ const repoSchema = z.object({
   github_id: z.number(),
   url: z.string().url(),
   description: z.string().nullable(),
+  language: z.string().nullable(),
   stargazers_count: z.number(),
   forks_count: z.number(),
   watchers_count: z.number(),
@@ -43,6 +44,7 @@ async function getRepoData(repoFullName: string) {
     headers: {
       Authorization: `Bearer ${process.env.GITHUB_TOKEN}`,
       Accept: 'application/vnd.github+json',
+      'User-Agent': 'yc-repo-importer',
     },
   });
 
@@ -89,6 +91,7 @@ async function main() {
       github_id: githubData.id,
       url: githubData.html_url,
       description: githubData.description,
+      language: githubData.language,
       stargazers_count: githubData.stargazers_count,
       forks_count: githubData.forks_count,
       watchers_count: githubData.watchers_count,
@@ -108,10 +111,21 @@ async function main() {
       continue;
     }
 
-    await db.insert(repos).values(parsed.data).onConflictDoUpdate({
-      target: repos.github_id,
-      set: parsed.data,
-    });
+    await db
+      .insert(repos)
+      .values(parsed.data)
+      .onConflictDoUpdate({
+        target: repos.github_id,
+        set: {
+          stargazers_count: parsed.data.stargazers_count,
+          forks_count: parsed.data.forks_count,
+          watchers_count: parsed.data.watchers_count,
+          open_issues_count: parsed.data.open_issues_count,
+          language: parsed.data.language,
+          description: parsed.data.description,
+          updated_at: parsed.data.updated_at,
+        },
+      });
 
     console.log(`Inserted / Updated ${full_name}`);
   }

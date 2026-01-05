@@ -1,3 +1,2 @@
-export * from "./auth";
-export * from "./lists";
-export * from "./yc";
+export * from './auth';
+export * from './lists';

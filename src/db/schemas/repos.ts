@@ -20,6 +20,7 @@ export const repos = pgTable(
     full_name: varchar('full_name', { length: 256 }).notNull(),
     url: varchar('url', { length: 512 }).notNull(),
     description: text('description'),
+    language: varchar('language', { length: 100 }),
     stargazers_count: integer('stargazers_count').notNull().default(0),
     forks_count: integer('forks_Count').notNull().default(0),
     watchers_count: integer('watchers_count').notNull().default(0),
