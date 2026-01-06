@@ -44,9 +44,46 @@ def get_trending_repos(language="", since="daily"):
             "stars_earned":stars_earned
             })
     return repos
-       
-        
+
+def push_trending_repos(repos,category):
+    BACKEND_URL = "http://localhost:3000/api/webhooks/sync-trending"
+    SECRET_KEY = "abce"
+
+    if not repos:
+        print("No repos to send.")
+        return
     
+    print(f"Sending {len(repos)} repos of category: {category}")
+
+    jsonData = {
+        "repos":repos,
+        "category":category
+    }
+
+    headers = {
+        "Content-Type": "application/json",
+        "x-admin-secret": SECRET_KEY
+    }
+
+    try:
+        data = requests.post(BACKEND_URL,json=jsonData,headers=headers)
+        if data.status_code == 200:
+            print(f"Data send successfully")
+        else:
+            print(f"Failed : {repo.status_code}")
+
+    except Exception as e:
+        print(f"Connection Error: {e}")
 
 
-        
+if __name__ = "__main__":
+
+    daily_data = get_trending_repos(since='daily')
+    push_trending_repos(daily_data,category='trending-daily')
+
+    weekly_data = get_trending_repos(since='weekly')
+    push_trending_repos(daily_data,category='trenidng-weekly')
+
+    monthly_data = get_trending_repos(since='monthyl')
+    push_trending_repos(daily_data,category='trenidng-monthly')
+
