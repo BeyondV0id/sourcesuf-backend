@@ -63,9 +63,7 @@ def get_trending_repos(language="", since="daily"):
     return repos
 
 def push_trending_repos(repos, category):
-    # Ensure this URL is correct in your setup
-    BACKEND_URL = "http://localhost:4000/api/webhooks/incoming"
-    # Ensure this key matches backend .env ADMIN_SECRET
+    BACKEND_URL = "http://localhost:3000/api/webhooks/incoming"
     SECRET_KEY = "sourcesurf_admin_secret"
 
     if not repos:
@@ -75,7 +73,7 @@ def push_trending_repos(repos, category):
     print(f"Sending {len(repos)} repos of category: {category}")
 
     jsonData = {
-        "repos": repos,
+        "repoList": repos,
         "category": category
     }
 
@@ -88,6 +86,7 @@ def push_trending_repos(repos, category):
         data = requests.post(BACKEND_URL, json=jsonData, headers=headers)
         if data.status_code == 200:
             print(f"✅ Success: {category} processed.")
+            print("Response:", data.json())
         else:
             print(f"❌ Failed: {data.status_code} - {data.text}")
 

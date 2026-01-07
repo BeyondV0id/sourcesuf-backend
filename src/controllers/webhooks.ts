@@ -20,8 +20,10 @@ export const getTrendingRepos = async (req: Request, res: Response) => {
   //clear old trending
   await clearOldTrending(category);
 
+  const results = [];
   for (const item of repoList) {
     try {
+      console.log(`Processing ${item.owner}/${item.repo}`);
       const { data: full } = await octokit.rest.repos.get({
         owner: item.owner,
         repo: item.repo,
@@ -47,15 +49,17 @@ export const getTrendingRepos = async (req: Request, res: Response) => {
 
       const validatedData = RepoSchema.parse(rawData);
       const repoId = await upsertRepo(validatedData);
+      console.log(`Upserted repoId: ${repoId}`);
 
       await linkTopicsToRepo(repoId, full.topics || []);
 
       //link trending category(period)
-
+      console.log(`Updating trending for ${repoId} category ${category}`);
       await updateTrendingRepos(repoId,category);
+      console.log(`Updated trending for ${repoId}`);
 
     } catch (err) {
-      console.error(`Failed to sync ${item.owner}/${item.repo}:`, err.message);
+      console.error(`Failed to sync ${item.owner}/${item.repo}:`, err);
     }
   }
 

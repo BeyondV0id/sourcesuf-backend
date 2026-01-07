@@ -17,7 +17,7 @@ app.use(
   })
 );
 app.use(express.json());
-app.all('/auth/*', toNodeHandler(auth));
+app.use('/auth', toNodeHandler(auth));
 
 app.use('/api/webhooks', webhookRoutes);
 app.use('/api/trending', trendingRoutes);
