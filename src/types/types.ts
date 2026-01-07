@@ -5,6 +5,6 @@ export interface ScrapedRepo {
 
 
 export interface WebHookPayload{
-  repos: ScrapedRepo[];
+  repoList: ScrapedRepo[];
   category: string;
 }

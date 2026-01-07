@@ -1,8 +1,8 @@
-import { Octokit } from "octokit";
+import { Octokit } from "@octokit/rest";
 
-if (!process.env.GITHUB_ACCESS_TOKEN) {
-  throw new Error('GITHUB_ACCESS_TOKEN is missing from environment variables');
+if (!process.env.GITHUB_TOKEN) {
+  throw new Error('GITHUB_TOKEN is missing from environment variables');
 }
 export const octokit = new Octokit({
-  auth: process.env.GITHUB_ACCESS_TOKEN,
+  auth: process.env.GITHUB_TOKEN,
 });

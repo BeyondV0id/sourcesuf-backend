@@ -9,6 +9,8 @@ import {
   varchar,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
+import { relations } from 'drizzle-orm';
+import { trending_repos } from './trending';
 
 export const repos = pgTable(
   'repos',
@@ -56,3 +58,19 @@ export const repo_to_tags = pgTable(
     pk: primaryKey({ columns: [table.repo_id, table.tag_id] }),
   })
 );
+
+export const reposRelations = relations(repos, ({ many }) => ({
+  trending: many(trending_repos),
+  tags: many(repo_to_tags),
+}));
+
+export const repoToTagsRelations = relations(repo_to_tags, ({ one }) => ({
+  repo: one(repos, {
+    fields: [repo_to_tags.repo_id],
+    references: [repos.id],
+  }),
+  tag: one(tags, {
+    fields: [repo_to_tags.tag_id],
+    references: [tags.id],
+  }),
+}));

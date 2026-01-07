@@ -9,7 +9,6 @@ dotenv.config();
 
 const filePath = path.join(process.cwd(), 'scripts/data/yc.json');
 
-/* ---------------- ZOD SCHEMA (MATCHES DB TYPES) ---------------- */
 
 const repoSchema = z.object({
   full_name: z.string(),
@@ -28,7 +27,6 @@ const repoSchema = z.object({
   updated_at: z.date().nullable(),
 });
 
-/* ---------------- HELPERS ---------------- */
 
 function getRepoNameParts(url: string) {
   const u = new URL(url);
@@ -56,7 +54,6 @@ async function getRepoData(repoFullName: string) {
   return res.json();
 }
 
-/* ---------------- MAIN SCRIPT ---------------- */
 
 async function main() {
   const rawData = fs.readFileSync(filePath, 'utf-8');
@@ -131,7 +128,6 @@ async function main() {
   }
 }
 
-/* ---------------- RUN ---------------- */
 
 main()
   .then(() => {

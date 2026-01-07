@@ -1,6 +1,8 @@
-import { Request,Response } from 'express';
+import { Router } from 'express';
+import { getTrendingList } from '../controllers/trending';
 
 const router = Router();
-router.get('/', async (req: Request, res: Response) => {
 
-});
+router.get('/', getTrendingList);
+
+export default router;

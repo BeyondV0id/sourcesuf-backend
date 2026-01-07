@@ -1,6 +1,6 @@
 from bs4 import BeautifulSoup
 import requests
-
+import re
 
 def get_trending_repos(language="", since="daily"):
     URL = "https://github.com/trending"
@@ -24,40 +24,59 @@ def get_trending_repos(language="", since="daily"):
     repos = []
 
     for row in soup.find_all("article", class_="Box-row"):
-        title_tag = row.find("h2", class_="h3")
-        a_tag = title_tag.find("a")
-        title = a_tag.get_text(strip=True)
-        owner, repo = title.split("/")
+        try:
+            title_tag = row.find("h2", class_="h3")
+            a_tag = title_tag.find("a")
+            # Usually "\n  owner / repo \n"
+            title = a_tag.get_text(strip=True)
+            # Remove spaces
+            title = title.replace(" ", "")
+            parts = title.split("/")
+            
+            if len(parts) < 2:
+                continue
 
-        stats_div = row.find("div", class_="f6 color-fg-muted mt-2")
-        links = stats_div.find_all("a")
-        stars = links[0].get_text(strip=True)
-        forks = links[1].get_text(strip=True)
-        spans = stats_div.find_all("span")
-        stars_earned = spans[-1].get_text(strip=True)
+            owner = parts[0]
+            repo_name = parts[1]
 
-        repos.append({
-            "owner":owner,
-            "repo":repo,
-            "stargazers":stars,
-            "forks":forks,
-            "stars_earned":stars_earned
+            stats_div = row.find("div", class_="f6 color-fg-muted mt-2")
+            if not stats_div:
+                continue
+                
+            spans = stats_div.find_all("span")
+            if not spans:
+                stars_earned = 0
+            else:
+                raw_stars_earned = spans[-1].get_text(strip=True)
+                clean_num = re.sub(r'[^\d]', '', raw_stars_earned)
+                stars_earned = int(clean_num) if clean_num else 0
+
+            repos.append({
+                "owner": owner,
+                "repo": repo_name,
+                "stars_earned": stars_earned
             })
+        except Exception as e:
+            print(f"Skipping row error: {e}")
+            continue
+
     return repos
 
-def push_trending_repos(repos,category):
-    BACKEND_URL = "http://localhost:3000/api/webhooks/sync-trending"
-    SECRET_KEY = "abce"
+def push_trending_repos(repos, category):
+    # Ensure this URL is correct in your setup
+    BACKEND_URL = "http://localhost:4000/api/webhooks/incoming"
+    # Ensure this key matches backend .env ADMIN_SECRET
+    SECRET_KEY = "sourcesurf_admin_secret"
 
     if not repos:
-        print("No repos to send.")
+        print(f"No repos to send for {category}.")
         return
     
     print(f"Sending {len(repos)} repos of category: {category}")
 
     jsonData = {
-        "repos":repos,
-        "category":category
+        "repos": repos,
+        "category": category
     }
 
     headers = {
@@ -66,24 +85,26 @@ def push_trending_repos(repos,category):
     }
 
     try:
-        data = requests.post(BACKEND_URL,json=jsonData,headers=headers)
+        data = requests.post(BACKEND_URL, json=jsonData, headers=headers)
         if data.status_code == 200:
-            print(f"Data send successfully")
+            print(f"✅ Success: {category} processed.")
         else:
-            print(f"Failed : {repo.status_code}")
+            print(f"❌ Failed: {data.status_code} - {data.text}")
 
     except Exception as e:
-        print(f"Connection Error: {e}")
+        print(f"❌ Connection Error: {e}")
 
 
-if __name__ = "__main__":
-
+if __name__ == "__main__":
+    
+    print("--- [Daily] ---")
     daily_data = get_trending_repos(since='daily')
-    push_trending_repos(daily_data,category='trending-daily')
+    push_trending_repos(daily_data, category='daily')
 
+    print("\n--- [Weekly] ---")
     weekly_data = get_trending_repos(since='weekly')
-    push_trending_repos(daily_data,category='trenidng-weekly')
+    push_trending_repos(weekly_data, category='weekly')
 
-    monthly_data = get_trending_repos(since='monthyl')
-    push_trending_repos(daily_data,category='trenidng-monthly')
-
+    print("\n--- [Monthly] ---")
+    monthly_data = get_trending_repos(since='monthly')
+    push_trending_repos(monthly_data, category='monthly')

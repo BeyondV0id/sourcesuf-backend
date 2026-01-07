@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { Octokit } from '../lib/github';
+import { octokit } from '../lib/github';
 
 export const getDiscoverRepos = async (req: Request, res: Response) => {
   const language = req.query.language ? String(req.query.language) : undefined;
