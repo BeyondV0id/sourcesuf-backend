@@ -93,13 +93,13 @@ def push_trending_repos(repos, category):
     try:
         data = requests.post(BACKEND_URL, json=jsonData, headers=headers)
         if data.status_code == 200:
-            print(f"✅ Success: {category} processed.")
+            print(f"Success: {category} processed.")
             print("Response:", data.json())
         else:
-            print(f"❌ Failed: {data.status_code} - {data.text}")
+            print(f"Failed: {data.status_code} - {data.text}")
 
     except Exception as e:
-        print(f"❌ Connection Error: {e}")
+        print(f" Connection Error: {e}")
 
 
 if __name__ == "__main__":
