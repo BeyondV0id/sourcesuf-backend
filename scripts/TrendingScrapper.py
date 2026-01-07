@@ -1,6 +1,10 @@
 from bs4 import BeautifulSoup
 import requests
 import re
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 def get_trending_repos(language="", since="daily"):
     URL = "https://github.com/trending"
@@ -64,7 +68,11 @@ def get_trending_repos(language="", since="daily"):
 
 def push_trending_repos(repos, category):
     BACKEND_URL = "http://localhost:3000/api/webhooks/incoming"
-    SECRET_KEY = "sourcesurf_admin_secret"
+    SECRET_KEY = os.getenv("ADMIN_SECRET")
+    
+    if not SECRET_KEY:
+        print("Error: ADMIN_SECRET environment variable not set.")
+        return
 
     if not repos:
         print(f"No repos to send for {category}.")
