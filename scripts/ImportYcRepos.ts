@@ -1,40 +1,23 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
-import fs from 'fs';
-import path from 'path';
-import { db } from '../src/db/client';
-import { repos } from '../src/db/schemas/repos';
-
+import { upsertRepo } from '../src/services/repoService';
 dotenv.config();
-
-const filePath = path.join(process.cwd(), 'scripts/data/yc.json');
-
-
-const repoSchema = z.object({
-  full_name: z.string(),
-  owner: z.string(),
-  repo_name: z.string(),
-  github_id: z.number(),
-  url: z.string().url(),
-  description: z.string().nullable(),
-  language: z.string().nullable(),
-  stargazers_count: z.number(),
-  forks_count: z.number(),
-  watchers_count: z.number(),
-  open_issues_count: z.number(),
-  is_yc: z.boolean(),
-  created_at: z.date().nullable(),
-  updated_at: z.date().nullable(),
+const ycCompanySchema = z.object({
+  name: z.string(),
+  repo_url: z.string().optional(),
 });
 
+const YC_API_URL = 'https://yc-oss.github.io/api/meta.json';
 
 function getRepoNameParts(url: string) {
-  const u = new URL(url);
-  const [owner, repo_name] = u.pathname.split('/').filter(Boolean);
-  if (!owner || !repo_name) {
-    throw new Error('Invalid GitHub repo URL');
+  try {
+    const u = new URL(url);
+    const [owner, repo_name] = u.pathname.split('/').filter(Boolean);
+    if (!owner || !repo_name) return null;
+    return { owner, repo_name };
+  } catch (error) {
+    return null;
   }
-  return { owner, repo_name };
 }
 
 async function getRepoData(repoFullName: string) {
@@ -45,96 +28,59 @@ async function getRepoData(repoFullName: string) {
       'User-Agent': 'yc-repo-importer',
     },
   });
-
   if (!res.ok) {
-    console.error(`Failed to fetch ${repoFullName}: ${res.status}`);
-    return null;
+     if (res.status !== 404) console.error(`Failed to fetch ${repoFullName}: ${res.status}`);
+     return null;
   }
-
   return res.json();
 }
 
-
 async function main() {
-  const rawData = fs.readFileSync(filePath, 'utf-8');
-  const data: Record<string, any> = JSON.parse(rawData);
-
-  for (const [key, repoInfo] of Object.entries(data)) {
-    if (!repoInfo || typeof repoInfo.url !== 'string') {
-      console.warn(`Skipping ${key}: invalid or missing url`);
-      continue;
-    }
-
-    let owner: string, repo_name: string;
-    try {
-      ({ owner, repo_name } = getRepoNameParts(repoInfo.url));
-    } catch (err) {
-      console.warn(`Skipping ${key}: bad url`, err);
-      continue;
-    }
-
-    const full_name = `${owner}/${repo_name}`;
+  console.log('Fetching YC OSS Data...');
+  const res = await fetch(YC_API_URL);
+  if (!res.ok) throw new Error(`Failed to fetch YC data: ${res.statusText}`);
+  
+  const rawData = await res.json();
+  const companies = z.array(ycCompanySchema).parse(rawData);
+  console.log(`Found ${companies.length} companies. Starting sync...`);
+  for (const company of companies) {
+    if (!company.repo_url) continue;
+    const parts = getRepoNameParts(company.repo_url);
+    if (!parts) continue;
+    const full_name = `${parts.owner}/${parts.repo_name}`;
     const githubData = await getRepoData(full_name);
-
-    if (!githubData) {
-      console.warn(`Skipping ${key}: GitHub fetch failed`);
-      continue;
-    }
-
-    const repoObject = {
-      full_name,
-      owner,
-      repo_name,
-      github_id: githubData.id,
-      url: githubData.html_url,
-      description: githubData.description,
-      language: githubData.language,
-      stargazers_count: githubData.stargazers_count,
-      forks_count: githubData.forks_count,
-      watchers_count: githubData.watchers_count,
-      open_issues_count: githubData.open_issues_count,
-      created_at: githubData.created_at
-        ? new Date(githubData.created_at)
-        : null,
-      updated_at: githubData.updated_at
-        ? new Date(githubData.updated_at)
-        : null,
-      is_yc: true,
-    };
-
-    const parsed = repoSchema.safeParse(repoObject);
-    if (!parsed.success) {
-      console.error(`Validation failed for ${full_name}`, parsed.error);
-      continue;
-    }
-
-    await db
-      .insert(repos)
-      .values(parsed.data)
-      .onConflictDoUpdate({
-        target: repos.github_id,
-        set: {
-          stargazers_count: parsed.data.stargazers_count,
-          forks_count: parsed.data.forks_count,
-          watchers_count: parsed.data.watchers_count,
-          open_issues_count: parsed.data.open_issues_count,
-          language: parsed.data.language,
-          description: parsed.data.description,
-          updated_at: parsed.data.updated_at,
-        },
+    if (!githubData) continue;
+    try {
+      await upsertRepo({
+        github_id: githubData.id,
+        owner: githubData.owner.login,
+        repo_name: githubData.name,
+        full_name: githubData.full_name,
+        url: githubData.html_url,
+        description: githubData.description,
+        language: githubData.language,
+        stargazers_count: githubData.stargazers_count,
+        forks_count: githubData.forks_count,
+        watchers_count: githubData.watchers_count,
+        open_issues_count: githubData.open_issues_count,
+        created_at: githubData.created_at ? new Date(githubData.created_at) : null,
+        updated_at: githubData.updated_at ? new Date(githubData.updated_at) : null,
+        last_synced_at: new Date(),
+        is_yc: true, 
       });
-
-    console.log(`Inserted / Updated ${full_name}`);
+      
+      console.log(`Synced: ${full_name}`);
+    } catch (err: any) {
+      console.error(`Error saving ${full_name}:`, err.message);
+    }
   }
 }
-
-
 main()
   .then(() => {
-    console.log('Script completed');
+    console.log('Script completed successfully.');
     process.exit(0);
   })
   .catch((err) => {
-    console.error('Script failed', err);
+    console.error('Script failed:', err);
     process.exit(1);
   });

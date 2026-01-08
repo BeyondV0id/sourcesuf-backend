@@ -81,7 +81,6 @@ def push_trending_repos(repos, category):
     jsonData = {
         "repoList": repos,
         "category": category,
-        "stars_earned":stars_earned,
     }
 
     headers = {

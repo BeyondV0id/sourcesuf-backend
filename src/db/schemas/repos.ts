@@ -59,6 +59,7 @@ export const repo_to_tags = pgTable(
   })
 );
 
+//many to many relation
 export const reposRelations = relations(repos, ({ many }) => ({
   trending: many(trending_repos),
   tags: many(repo_to_tags),
