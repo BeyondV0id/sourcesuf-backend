@@ -4,7 +4,10 @@ import { octokit } from '../lib/github';
 import { WebHookPayload } from '@/types/types';
 import { RepoSchema } from '@/types/schema';
 import { upsertRepo } from '@/services/repoService';
-import { clearOldTrending, updateTrendingRepos } from '@/services/trendingRepos';
+import {
+  clearOldTrending,
+  updateTrendingRepos,
+} from '@/services/trendingRepos';
 
 export const getTrendingRepos = async (req: Request, res: Response) => {
   const { repoList, category } = req.body as WebHookPayload;
@@ -20,10 +23,10 @@ export const getTrendingRepos = async (req: Request, res: Response) => {
   //clear old trending
   await clearOldTrending(category);
 
-  const results = [];
   for (const item of repoList) {
     try {
       console.log(`Processing ${item.owner}/${item.repo}`);
+      const stars_earned = item.stars_earned;
       const { data: full } = await octokit.rest.repos.get({
         owner: item.owner,
         repo: item.repo,
@@ -55,9 +58,8 @@ export const getTrendingRepos = async (req: Request, res: Response) => {
 
       //link trending category(period)
       console.log(`Updating trending for ${repoId} category ${category}`);
-      await updateTrendingRepos(repoId,category);
+      await updateTrendingRepos(repoId, category, stars_earned);
       console.log(`Updated trending for ${repoId}`);
-
     } catch (err) {
       console.error(`Failed to sync ${item.owner}/${item.repo}:`, err);
     }

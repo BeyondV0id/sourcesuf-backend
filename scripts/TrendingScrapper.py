@@ -31,9 +31,7 @@ def get_trending_repos(language="", since="daily"):
         try:
             title_tag = row.find("h2", class_="h3")
             a_tag = title_tag.find("a")
-            # Usually "\n  owner / repo \n"
             title = a_tag.get_text(strip=True)
-            # Remove spaces
             title = title.replace(" ", "")
             parts = title.split("/")
             
@@ -82,7 +80,8 @@ def push_trending_repos(repos, category):
 
     jsonData = {
         "repoList": repos,
-        "category": category
+        "category": category,
+        "stars_earned":stars_earned,
     }
 
     headers = {
