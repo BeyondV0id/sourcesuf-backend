@@ -7,6 +7,7 @@ import { auth } from './lib/auth';
 import webhookRoutes from './routes/webhooks.route';
 import trendingRoutes from './routes/trending.route';
 import discoverRoutes from './routes/discover.route';
+import findIssues from './routes/findIssues.route';
 import ycRoutes from './routes/yc.route';
 
 const app = express();
@@ -24,6 +25,7 @@ app.use('/api/webhooks', webhookRoutes);
 app.use('/api/trending', trendingRoutes);
 app.use('/api/discover', discoverRoutes);
 app.use('/api/yc-oss', ycRoutes);
+app.use('/api/findIssues', findIssues);
 
 app.get('/', (req: Request, res: Response) => {
   res.send('SourceSurf API is running');

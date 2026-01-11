@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getYcRepos } from '../controllers/yc';
+import { getYcRepos } from '../controllers/findYC';
 
 const router = Router();
 router.get('/', getYcRepos);

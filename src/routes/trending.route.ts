@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getTrendingList } from '../controllers/trending';
+import { getTrendingList } from '../controllers/findTrending';
 
 const router = Router();
 
