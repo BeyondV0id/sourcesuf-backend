@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getDiscoverRepos } from '../controllers/discover';
+import { getDiscoverRepos } from '../controllers/discover.controller';
 
 const router = Router();
 

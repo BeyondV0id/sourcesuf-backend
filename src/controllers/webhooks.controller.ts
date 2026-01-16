@@ -1,13 +1,13 @@
-import { linkTopicsToRepo } from '../services/tags';
+import { linkTopicsToRepo } from '../services/tags.service';
 import { Request, Response } from 'express';
 import { octokit } from '../lib/github';
 import { WebHookPayload } from '@/types/types';
 import { RepoSchema } from '@/types/schema';
-import { upsertRepo } from '@/services/repoService';
+import { upsertRepo } from '@/services/repos.service';
 import {
   clearOldTrending,
   updateTrendingRepos,
-} from '@/services/trendingRepos';
+} from '@/services/trending.service';
 
 export const getTrendingRepos = async (req: Request, res: Response) => {
   const { repoList, category } = req.body as WebHookPayload;

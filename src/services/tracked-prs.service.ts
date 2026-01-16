@@ -1,5 +1,5 @@
 import { db } from '../db/client';
-import { tracked_prs } from '@/db/schemas/trackedPRs';
+import { tracked_prs } from '../db/schemas/tracked-prs';
 import { eq, desc, and, InferInsertModel } from 'drizzle-orm';
 
 export type NewTrackedPR = InferInsertModel<typeof tracked_prs>;
@@ -17,7 +17,7 @@ export const prService = {
     const result = await db
       .select()
       .from(tracked_prs)
-      .where(and(eq(tracked_prs.user_id, userId), eq(tracked_prs.id, id)))
+      .where(and(eq(tracked_prs.id, Number(id)), eq(tracked_prs.user_id, userId)))
       .limit(1);
     return result[0] ?? null;
   },
@@ -44,19 +44,20 @@ export const prService = {
     const result = await db
       .update(tracked_prs)
       .set(fields)
-      .where(and(eq(tracked_prs.id, id), eq(tracked_prs.user_id, userId)))
+      .where(and(eq(tracked_prs.id, Number(id)), eq(tracked_prs.user_id, userId)))
       .returning();
     return result[0] ?? null;
   },
 
   updateSystemFields: async (
     id: string,
+    userId: string,
     fields: Partial<Pick<NewTrackedPR, 'title' | 'state'>>
   ) => {
     const result = await db
       .update(tracked_prs)
       .set(fields)
-      .where(eq(tracked_prs.id, id))
+      .where(and(eq(tracked_prs.id, Number(id)), eq(tracked_prs.user_id, userId)))
       .returning();
     return result[0] ?? null;
   },
@@ -64,6 +65,6 @@ export const prService = {
   delete: async (id: string, userId: string) => {
     return await db
       .delete(tracked_prs)
-      .where(and(eq(tracked_prs.id, id), eq(tracked_prs.user_id, userId)));
+      .where(and(eq(tracked_prs.id, Number(id)), eq(tracked_prs.user_id, userId)));
   },
 };

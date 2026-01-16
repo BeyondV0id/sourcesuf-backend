@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { z } from 'zod';
-import { upsertRepo } from '../src/services/repoService';
+import { upsertRepo } from '../src/services/repos.service';
 dotenv.config();
 const ycCompanySchema = z.object({
   name: z.string(),
@@ -29,8 +29,9 @@ async function getRepoData(repoFullName: string) {
     },
   });
   if (!res.ok) {
-     if (res.status !== 404) console.error(`Failed to fetch ${repoFullName}: ${res.status}`);
-     return null;
+    if (res.status !== 404)
+      console.error(`Failed to fetch ${repoFullName}: ${res.status}`);
+    return null;
   }
   return res.json();
 }
@@ -39,7 +40,7 @@ async function main() {
   console.log('Fetching YC OSS Data...');
   const res = await fetch(YC_API_URL);
   if (!res.ok) throw new Error(`Failed to fetch YC data: ${res.statusText}`);
-  
+
   const rawData = await res.json();
   const companies = z.array(ycCompanySchema).parse(rawData);
   console.log(`Found ${companies.length} companies. Starting sync...`);
@@ -63,12 +64,16 @@ async function main() {
         forks_count: githubData.forks_count,
         watchers_count: githubData.watchers_count,
         open_issues_count: githubData.open_issues_count,
-        created_at: githubData.created_at ? new Date(githubData.created_at) : null,
-        updated_at: githubData.updated_at ? new Date(githubData.updated_at) : null,
+        created_at: githubData.created_at
+          ? new Date(githubData.created_at)
+          : null,
+        updated_at: githubData.updated_at
+          ? new Date(githubData.updated_at)
+          : null,
         last_synced_at: new Date(),
-        is_yc: true, 
+        is_yc: true,
       });
-      
+
       console.log(`Synced: ${full_name}`);
     } catch (err: any) {
       console.error(`Error saving ${full_name}:`, err.message);

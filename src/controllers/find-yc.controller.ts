@@ -1,4 +1,4 @@
-import {  YcRepoService } from "@/services/getYcRepos";
+import {  YcRepoService } from "@/services/yc-repos.service";
 import {Request,Response} from 'express';
 
 
@@ -15,8 +15,7 @@ export const getYcRepos = async (req:Request, res:Response) =>{
       page,
       data,
     });
-  }
-  catch(e:any){
+  }  catch(e:any){
     console.error("Error fetching Yc repos: ",e);
     res.status(500).json({error : 'Internal Server Error'});
   }

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { getTrendingRepos } from "@/controllers/webhooks";
+import { getTrendingRepos } from "@/controllers/webhooks.controller";
 
 
 const router = Router();

@@ -64,6 +64,20 @@
       "when": 1768231876556,
       "tag": "0008_blushing_black_panther",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1768485116990,
+      "tag": "0009_light_wolverine",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1768536652979,
+      "tag": "0010_modern_ma_gnuci",
+      "breakpoints": true
     }
   ]
 }
