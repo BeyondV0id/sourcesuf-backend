@@ -11,6 +11,7 @@ import findIssues from './routes/find-issues.route';
 import findGSOC from './routes/gsoc.route';
 import trackPrsRoutes from './routes/track-prs.route';
 import trackIssuesRoutes from './routes/track-issues.route';
+import dashboardRoutes from './routes/dashboard.route';
 
 const app = express();
 const PORT = process.env.PORT ?? 3000;
@@ -30,7 +31,7 @@ app.use('/api/findIssues', findIssues);
 app.use('/api/findGSOC', findGSOC);
 app.use('/api/track-prs', trackPrsRoutes);
 app.use('/api/track-issues', trackIssuesRoutes);
-// app.use('/api/dashboard/');
+app.use('/api/dashboard/', dashboardRoutes);
 app.get('/', (req: Request, res: Response) => {
   res.send('SourceSurf API is running');
 });

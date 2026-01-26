@@ -2,8 +2,7 @@ import { Request, Response } from 'express';
 import { getUserFromLocals } from '@/lib/getUser';
 import { prService } from '@/services/tracked-prs.service';
 import { octokit } from '@/lib/github';
-import { NewTrackedPR,updateSystemFields } from '@/services/tracked-prs.service';
-
+import { NewTrackedPR } from '@/services/tracked-prs.service';
 
 const parsePrUrl = (prUrl: string) => {
   try {
@@ -59,6 +58,10 @@ export const trackPR = async (req: Request, res: Response) => {
       deletions: data.deletions,
       changed_files: data.changed_files,
 
+      merged_at: data.merged_at ? new Date(data.merged_at) : null,
+      closed_at: data.closed_at ? new Date(data.closed_at) : null,
+      opened_at: new Date(data.created_at),
+
       note: notes || '',
       priority: priority || '',
       last_synced_at: new Date(),
@@ -71,18 +74,17 @@ export const trackPR = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteTrackedPr = async (req:Request,res:Response)=>{
-  try{
+export const deleteTrackedPr = async (req: Request, res: Response) => {
+  try {
     const userId = getUserFromLocals(res.locals).id;
-    const {id} = req.params;
+    const { id } = req.params;
 
-    await prService.delete(id,userId);
+    await prService.delete(id, userId);
     res.json({
       success: true,
-    })
-  }
-  catch(err:any){
-    res.status(500).json({error:err.message});
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -92,23 +94,27 @@ export const syncPR = async (req: Request, res: Response) => {
     const { id } = req.params;
     const record = await prService.findById(id, userId);
     if (!record) {
-        res.status(404).json({ error: "PR not found" });
-        return; 
+      res.status(404).json({ error: 'PR not found' });
+      return;
     }
     const { data } = await octokit.rest.pulls.get({
       owner: record.repo_owner,
       repo: record.repo_name,
-      pull_number: record.number
+      pull_number: record.number,
     });
-    const updated : updateSystemFields = {
+    const updated: updateSystemFields = {
       title: data.title,
       state: data.merged ? 'merged' : data.state,
       additions: data.additions,
       deletions: data.deletions,
       changed_files: data.changed_files,
-      last_synced_at: new Date()
-    }
-    await prService.updateSystemFields(id,userId,updated);
+      merged_at: data.merged_at ? new Date(data.merged_at) : null,
+      closed_at: data.closed_at ? new Date(data.closed_at) : null,
+      opened_at: new Date(data.created_at),
+      merged_by: data.merged_by?.login || null,
+      last_synced_at: new Date(),
+    };
+    await prService.updateSystemFields(id, userId, updated);
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -120,14 +126,14 @@ export const updatePRProxy = async (req: Request, res: Response) => {
     const userId = getUserFromLocals(res.locals).id;
     const { id } = req.params;
     const { notes, priority } = req.body;
-    const [updated] = await prService.updateUserField(id, userId, { 
-        note: notes, 
-        priority, 
+    const updated = await prService.updateUserField(id, userId, {
+      note: notes,
+      priority,
     });
-    
+
     if (!updated) {
-        res.status(404).json({ error: "PR not found" });
-        return; 
+      res.status(404).json({ error: 'PR not found' });
+      return;
     }
     res.json(updated);
   } catch (error: any) {
