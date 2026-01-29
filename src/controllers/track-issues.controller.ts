@@ -2,8 +2,10 @@ import { Request, Response } from 'express';
 import { getUserFromLocals } from '@/lib/getUser';
 import { issueService } from '@/services/tracked-issues.service';
 import { octokit } from '@/lib/github';
-import { NewTrackedIssue, updateSystemFields } from '@/services/tracked-issues.service';
-
+import {
+  NewTrackedIssue,
+  updateSystemFields,
+} from '@/services/tracked-issues.service';
 
 const parseIssueUrl = (issueUrl: string) => {
   try {
@@ -41,8 +43,8 @@ export const trackIssue = async (req: Request, res: Response) => {
     const issueDetails = parseIssueUrl(url);
 
     if (!issueDetails || issueDetails instanceof Error) {
-        res.status(400).json({ error: "Invalid issue URL" });
-        return;
+      res.status(400).json({ error: 'Invalid issue URL' });
+      return;
     }
 
     const { data } = await octokit.rest.issues.get({
@@ -72,18 +74,23 @@ export const trackIssue = async (req: Request, res: Response) => {
   }
 };
 
-export const deleteTrackedIssue = async (req:Request,res:Response)=>{
-  try{
+export const deleteTrackedIssue = async (req: Request, res: Response) => {
+  try {
     const userId = getUserFromLocals(res.locals).id;
-    const {id} = req.params;
+    const { id } = req.params;
 
-    await issueService.delete(id,userId);
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      res.status(400).json({ error: 'Invalid ID format' });
+      return;
+    }
+
+    await issueService.delete(parsedId, userId);
     res.json({
       success: true,
-    })
-  }
-  catch(err:any){
-    res.status(500).json({error:err.message});
+    });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 };
 
@@ -91,22 +98,29 @@ export const syncIssue = async (req: Request, res: Response) => {
   try {
     const userId = getUserFromLocals(res.locals).id;
     const { id } = req.params;
-    const record = await issueService.findById(id, userId);
+
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      res.status(400).json({ error: 'Invalid ID format' });
+      return;
+    }
+
+    const record = await issueService.findById(parsedId, userId);
     if (!record) {
-        res.status(404).json({ error: "Issue not found" });
-        return; 
+      res.status(404).json({ error: 'Issue not found' });
+      return;
     }
     const { data } = await octokit.rest.issues.get({
       owner: record.repo_owner,
       repo: record.repo_name,
-      issue_number: record.number
+      issue_number: record.number,
     });
-    const updated : updateSystemFields = {
+    const updated: updateSystemFields = {
       title: data.title,
       state: data.state,
-      last_synced_at: new Date()
-    }
-    await issueService.updateSystemFields(id,userId,updated);
+      last_synced_at: new Date(),
+    };
+    await issueService.updateSystemFields(parsedId, userId, updated);
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -117,15 +131,22 @@ export const updateIssueProxy = async (req: Request, res: Response) => {
   try {
     const userId = getUserFromLocals(res.locals).id;
     const { id } = req.params;
+
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      res.status(400).json({ error: 'Invalid ID format' });
+      return;
+    }
+
     const { notes, priority } = req.body;
-    const updated = await issueService.updateUserField(id, userId, { 
-        note: notes, 
-        priority, 
+    const updated = await issueService.updateUserField(parsedId, userId, {
+      note: notes,
+      priority,
     });
-    
+
     if (!updated) {
-        res.status(404).json({ error: "Issue not found" });
-        return; 
+      res.status(404).json({ error: 'Issue not found' });
+      return;
     }
     res.json(updated);
   } catch (error: any) {

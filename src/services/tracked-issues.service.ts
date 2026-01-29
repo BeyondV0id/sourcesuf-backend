@@ -14,11 +14,11 @@ export const issueService = {
       .orderBy(desc(tracked_issues.created_at));
   },
 
-  findById: async (id: string, userId: string) => {
+  findById: async (id: number, userId: string) => {
     const result = await db
       .select()
       .from(tracked_issues)
-      .where(and(eq(tracked_issues.id, Number(id)), eq(tracked_issues.user_id, userId)))
+      .where(and(eq(tracked_issues.id, id), eq(tracked_issues.user_id, userId)))
       .limit(1);
     return result[0] ?? null;
   },
@@ -38,34 +38,34 @@ export const issueService = {
   },
 
   updateUserField: async (
-    id: string,
+    id: number,
     userId: string,
     fields: Partial<Pick<NewTrackedIssue, 'note' | 'priority'>>
   ) => {
     const result = await db
       .update(tracked_issues)
       .set(fields)
-      .where(and(eq(tracked_issues.id, Number(id)), eq(tracked_issues.user_id, userId)))
+      .where(and(eq(tracked_issues.id, id), eq(tracked_issues.user_id, userId)))
       .returning();
     return result[0] ?? null;
   },
 
   updateSystemFields: async (
-    id: string,
+    id: number,
     userId: string,
     fields: updateSystemFields
   ) => {
     const result = await db
       .update(tracked_issues)
       .set(fields)
-      .where(and(eq(tracked_issues.id, Number(id)), eq(tracked_issues.user_id, userId)))
+      .where(and(eq(tracked_issues.id, id), eq(tracked_issues.user_id, userId)))
       .returning();
     return result[0] ?? null;
   },
 
-  delete: async (id: string, userId: string) => {
+  delete: async (id: number, userId: string) => {
     return await db
       .delete(tracked_issues)
-      .where(and(eq(tracked_issues.id, Number(id)), eq(tracked_issues.user_id, userId)));
+      .where(and(eq(tracked_issues.id, id), eq(tracked_issues.user_id, userId)));
   },
 };

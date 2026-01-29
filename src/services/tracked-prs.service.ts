@@ -2,7 +2,7 @@ import { db } from '../db/client';
 import { tracked_prs } from '../db/schemas/tracked-prs';
 import { eq, desc, and, InferInsertModel } from 'drizzle-orm';
 
-type TrackedPRInsert = typeof tracked_prs.$inferInsert;
+export type TrackedPRInsert = typeof tracked_prs.$inferInsert;
 
 export type UpdateUserFields = {
   note?: TrackedPRInsert['note'];
@@ -18,6 +18,7 @@ export type UpdateSystemFields = {
   additions?: TrackedPRInsert['additions'];
   deletions?: TrackedPRInsert['deletions'];
   changed_files?: TrackedPRInsert['changed_files'];
+  merged_by?: TrackedPRInsert['merged_by'];
   last_synced_at?: TrackedPRInsert['last_synced_at'];
 };
 export const prService = {

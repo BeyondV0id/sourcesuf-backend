@@ -2,7 +2,10 @@ import { Request, Response } from 'express';
 import { getUserFromLocals } from '@/lib/getUser';
 import { prService } from '@/services/tracked-prs.service';
 import { octokit } from '@/lib/github';
-import { NewTrackedPR } from '@/services/tracked-prs.service';
+import {
+  TrackedPRInsert,
+  UpdateSystemFields,
+} from '@/services/tracked-prs.service';
 
 const parsePrUrl = (prUrl: string) => {
   try {
@@ -44,7 +47,7 @@ export const trackPR = async (req: Request, res: Response) => {
       repo: prDetails.repo,
       pull_number: prDetails.number,
     });
-    const newPrData: NewTrackedPR = {
+    const newPrData: TrackedPRInsert = {
       user_id: userId,
       repo_owner: prDetails.owner,
       repo_name: prDetails.repo,
@@ -61,6 +64,7 @@ export const trackPR = async (req: Request, res: Response) => {
       merged_at: data.merged_at ? new Date(data.merged_at) : null,
       closed_at: data.closed_at ? new Date(data.closed_at) : null,
       opened_at: new Date(data.created_at),
+      merged_by: data.merged_by?.login || null,
 
       note: notes || '',
       priority: priority || '',
@@ -79,7 +83,13 @@ export const deleteTrackedPr = async (req: Request, res: Response) => {
     const userId = getUserFromLocals(res.locals).id;
     const { id } = req.params;
 
-    await prService.delete(id, userId);
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      res.status(400).json({ error: 'Invalid ID format' });
+      return;
+    }
+
+    await prService.delete(parsedId, userId);
     res.json({
       success: true,
     });
@@ -92,7 +102,14 @@ export const syncPR = async (req: Request, res: Response) => {
   try {
     const userId = getUserFromLocals(res.locals).id;
     const { id } = req.params;
-    const record = await prService.findById(id, userId);
+
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      res.status(400).json({ error: 'Invalid ID format' });
+      return;
+    }
+
+    const record = await prService.findById(parsedId, userId);
     if (!record) {
       res.status(404).json({ error: 'PR not found' });
       return;
@@ -102,7 +119,7 @@ export const syncPR = async (req: Request, res: Response) => {
       repo: record.repo_name,
       pull_number: record.number,
     });
-    const updated: updateSystemFields = {
+    const updated: UpdateSystemFields = {
       title: data.title,
       state: data.merged ? 'merged' : data.state,
       additions: data.additions,
@@ -114,7 +131,7 @@ export const syncPR = async (req: Request, res: Response) => {
       merged_by: data.merged_by?.login || null,
       last_synced_at: new Date(),
     };
-    await prService.updateSystemFields(id, userId, updated);
+    await prService.updateSystemFields(parsedId, userId, updated);
     res.json(updated);
   } catch (error: any) {
     res.status(500).json({ error: error.message });
@@ -126,7 +143,14 @@ export const updatePRProxy = async (req: Request, res: Response) => {
     const userId = getUserFromLocals(res.locals).id;
     const { id } = req.params;
     const { notes, priority } = req.body;
-    const updated = await prService.updateUserField(id, userId, {
+
+    const parsedId = parseInt(id, 10);
+    if (isNaN(parsedId)) {
+      res.status(400).json({ error: 'Invalid ID format' });
+      return;
+    }
+
+    const updated = await prService.updateUserField(parsedId, userId, {
       note: notes,
       priority,
     });

@@ -37,6 +37,7 @@ export const tracked_prs = pgTable(
     opened_at: timestamp('opened_at').defaultNow().notNull(),
     merged_at: timestamp('merged_at'),
     closed_at: timestamp('closed_at'),
+    merged_by: text('merged_by'),
 
     created_at: timestamp('created_at').defaultNow().notNull(),
     last_synced_at: timestamp('last_synced_at').defaultNow().notNull(),
