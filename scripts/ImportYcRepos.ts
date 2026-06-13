@@ -29,8 +29,8 @@ type YCCompanyAPI = z.infer<typeof ycCompanyAPISchema>;
 function getRepoNameParts(url: string) {
   try {
     const u = new URL(url);
-    if (!u.hostname.includes("github.com")) return null;
-    const [owner, repo_name] = u.pathname.split("/").filter(Boolean);
+    if (!u.hostname.includes('github.com')) return null;
+    const [owner, repo_name] = u.pathname.split('/').filter(Boolean);
     if (!owner || !repo_name) return null;
     return { owner, repo_name };
   } catch (error) {
@@ -41,7 +41,7 @@ function getRepoNameParts(url: string) {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 async function main() {
-  console.log("Fetching YC Data from:", YC_API_URL);
+  console.log('Fetching YC Data from:', YC_API_URL);
   const res = await fetch(YC_API_URL);
   if (!res.ok) throw new Error(`Failed to fetch YC data: ${res.statusText}`);
 
